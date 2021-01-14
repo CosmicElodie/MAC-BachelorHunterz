@@ -10,8 +10,11 @@ import com.mongodb.MongoClientURI;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+
+import javax.print.Doc;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -68,25 +71,21 @@ public class DocumentDAO {
         return (ObjectId) document.get("_id");
     }
 
-    public FindIterable<Document> getExercise(String exerciseID) {
-        BasicDBObject query = new BasicDBObject();
-        query.put("_id", exerciseID);
-        FindIterable<Document> cursor = collection.find(query);
-        return cursor;
+    public Document getExercise(String exerciseID) {
+        return collection.find(Filters.eq("_id", exerciseID)).first();
     }
 
-    public FindIterable<Document> getExerciseByCourse(String course) {
-        BasicDBObject query = new BasicDBObject();
-        query.put("course", course);
-        FindIterable<Document> cursor = collection.find(query);
-        return cursor;
+    public Document getExerciseByCourse(String course) {
+        return collection.find(Filters.eq("course", course)).first();;
     }
 
-    public FindIterable<Document> getExerciseByTeacher(String teacherInitials) {
-        BasicDBObject query = new BasicDBObject();
-        query.put("teacher", teacherInitials);
-        FindIterable<Document> cursor = collection.find(query);
-        return cursor;
+    public Document getExerciseByTeacher(String teacherInitials) {
+        return collection.find(Filters.eq("teacher", teacherInitials)).first();
+    }
+
+    public Document getExerciseByTeacherAndCourse (String teacher, String course) {
+        return collection.find(Filters
+                .and(Filters.eq("teacher", teacher), Filters.eq("course", course))).first();
     }
 
 }
