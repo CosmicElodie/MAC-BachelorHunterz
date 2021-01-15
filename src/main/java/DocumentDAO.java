@@ -1,7 +1,12 @@
 /**
  * Sources :
  * https://github.com/MonsterDeveloper/java-telegram-bot-tutorial/blob/master/Lesson%207/src/database.java
+ * https://monsterdeveloper.gitbooks.io/writing-telegram-bots-on-java/content/lesson-7.-creating-users-database-with-mongodb.html
+ * https://github.com/MonsterDeveloper/java-telegram-bot-tutorial/blob/master/lesson-7.-creating-users-database-with-mongodb.md
  * https://howtodoinjava.com/mongodb/mongodb-find-documents/
+ * https://docs.mongodb.com/guides/server/insert/#what-you-ll-need
+ * https://docs.mongodb.com/manual/reference/connection-string/
+ * https://howtodoinjava.com/mongodb/java-mongodb-insert-documents-in-collection-examples/
  */
 
 import com.mongodb.MongoClient;
@@ -12,7 +17,6 @@ import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import java.util.List;
 import java.util.logging.Level;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -24,7 +28,6 @@ public class DocumentDAO {
     private MongoClientURI connectionString = new MongoClientURI("mongodb://localhost:27017");
     private MongoCollection<Document> collection;
 
-    private DocumentDAO(){}
     public static DocumentDAO getInstance() {
         if(documentDAO == null) {
             documentDAO = new DocumentDAO();
@@ -49,13 +52,9 @@ public class DocumentDAO {
                     .append("id", userID)
                     .append("username", username);
             collection.insertOne(doc);
-            //mongoClient.close();
-            System.out.println("User not exists in database. Written.");
-            //return "user : no_exists";
+            System.out.println(firstname + " doesn't exist in database.");
         } else {
-            System.out.println("User exists in database.");
-            //mongoClient.close();
-            //return "user : exists";
+            System.out.println(firstname + " aka " + username + " performed an action !");
         }
     }
 

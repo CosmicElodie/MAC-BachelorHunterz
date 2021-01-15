@@ -60,25 +60,27 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
             System.out.println("Commande entrée : " + userCommand);
 
             //On check si l'utilisateur veut stoper une création d'exo qu'il a initiée.
-            if(userCommand.equals("/abort ")) {
-                System.out.println(("IN ABORT")); //TODO
-                //on enlève les données de création
-                exerciseDatas.clear();
-                isCourseNameCorrect = false;
-                isTeacherNameCorrect = false;
-                isStatementCorrect = false;
-                isCorrectionCorrect = false;
-                isCreatingExercise = false;
+            if(userCommand.startsWith("/abort")) {
+                if(isCreatingExercise) {
+                    //on enlève les données de création
+                    exerciseDatas.clear();
+                    isCourseNameCorrect = false;
+                    isTeacherNameCorrect = false;
+                    isStatementCorrect = false;
+                    isCorrectionCorrect = false;
+                    isCreatingExercise = false;
 
-                //On donne un feedback à l'user
-                messageToUser.setText("Création d'exercice stoppée.");
+                    //On donne un feedback à l'user
+                    messageToUser.setText("Création d'exercice stoppée.");
+                }
+                else {
+                    messageToUser.setText("Cette commande est utile uniquement lors de la création d'un exercice.");
+                }
             }
 
             //On check si l'utilisateur est en train de rentrer les données de création d'un exo qu'il a initiée.
             else if(!(isCourseNameCorrect && isTeacherNameCorrect && isStatementCorrect && isCorrectionCorrect) && isCreatingExercise)
             {
-                System.out.println("IN CREATION STEPS"); //TODO
-
                 if(!isTeacherNameCorrect) {
                     String teacherName = userCommand;
                     if(checkIfTeacherNameCorrect(teacherName.toUpperCase())) {
@@ -106,11 +108,9 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
 
             //On traite la commande de l'utilisateur
             else {
-                System.out.println("IN OTHER COMMANDS"); //TODO
                 switch (userCommand) {
                     case "/saymyname":
                         messageToUser.setText(firstname + " " + lastname + "... are you the one who knocks ?");
-                        System.out.println(update.getMessage().getFrom().getFirstName() + " " + update.getMessage().getFrom().getLastName()); //TODO
                         break;
                     case "/help":
                         messageToUser.setText(
@@ -122,7 +122,6 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                         break;
                     default:
                         if (userCommand.startsWith("/newexercise ")) {
-                            System.out.println("MIAOU"); //TODO
                             isCreatingExercise = true;
                             String courseName = userCommand.substring(13).toUpperCase();
                             if(checkIfCourseNameCorrect(courseName)) {
@@ -135,8 +134,6 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                                 messageToUser.setText("Le cours spécifié n'existe pas ou est mal orthographié.\n" +
                                         "Exemple : Sigle du cours d'Informatique 1 -> INF1");
                             }
-
-
                         }
                         else {
                             messageToUser.setText("La commande rentrée est inexistante.");
