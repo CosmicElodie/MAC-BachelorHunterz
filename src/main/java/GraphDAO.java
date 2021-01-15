@@ -5,11 +5,7 @@
  * https://neo4j.com/download-thanks-desktop/?edition=desktop&flavour=winstall64&release=1.3.11&offline=true#installation-guide
  */
 
-import org.neo4j.driver.AuthTokens;
-import org.neo4j.driver.Driver;
-import org.neo4j.driver.GraphDatabase;
-import org.neo4j.driver.Session;
-import org.neo4j.fabric.stream.StatementResult;
+import org.neo4j.driver.v1.*;
 
 
 import java.util.Collections;
@@ -17,7 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class GraphDAO implements AutoCloseable {
-    private GraphDAO graphDAO;
+    private static GraphDAO graphDAO;
     private final Driver driver;
 
     @Override
@@ -26,10 +22,10 @@ public class GraphDAO implements AutoCloseable {
     }
 
     private GraphDAO() {
-        driver = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic( "cosmicdarine", "bot123"));
+        driver = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic( "neo4j", "bot123"));
     }
 
-    GraphDAO getInstance() {
+    static GraphDAO getInstance() {
         if(graphDAO == null) {
             graphDAO = new GraphDAO();
         }
@@ -62,6 +58,6 @@ public class GraphDAO implements AutoCloseable {
     }
 
     public StatementResult getExerciseByUser(String user) {
-        return runRequest("MATCH (u:User)-[:PROPOSED]->(e:Exercise) WHERE u.name = '_" + user + "' RETURN e.statment;");
+        return runRequest("MATCH (u:User)-[:PROPOSED]->(e:Exercise) WHERE u.username = '_" + user + "' RETURN e.statment;");
     }
 }

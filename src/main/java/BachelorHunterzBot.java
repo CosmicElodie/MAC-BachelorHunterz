@@ -3,10 +3,15 @@
  * https://www.youtube.com/watch?v=xv-FYOizUSY
  */
 
+import com.mongodb.client.FindIterable;
+import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.neo4j.driver.v1.*;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.*;
@@ -135,6 +140,23 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                                         "Exemple : Sigle du cours d'Informatique 1 -> INF1");
                             }
                         }
+                        else if(userCommand.startsWith("/exercisesbyuser ")) {
+                            String specifiedUser = userCommand.substring(17);
+                            if(specifiedUser.length() > 0) {
+                                messageToUser.setText(getExerciseByUser(specifiedUser));
+                                InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+                                List<List<InlineKeyboardButton>> rowsInline = new LinkedList<>();
+                                List<InlineKeyboardButton> rowInline = new LinkedList<>();
+                                rowInline.add(new InlineKeyboardButton().setText("Suivre cet utilisateur").setCallbackData("Suivre" + userID + " _" + specifiedUser));
+                                rowsInline.add(rowInline);
+                                markup.setKeyboard(rowsInline);
+                                messageToUser.setReplyMarkup(markup);
+                            }
+                            else
+                            {
+                                messageToUser.setText("Veuillez spécifier le pseudo d'un utilisateur");
+                            }
+                        }
                         else {
                             messageToUser.setText("La commande rentrée est inexistante.");
                         }
@@ -171,6 +193,25 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
     private void addExerciseToDatabase(Long userID) {
         ObjectId exerciseId = DocumentDAO.getInstance().addExercise(exerciseDatas.get(0), exerciseDatas.get(1), exerciseDatas.get(2), exerciseDatas.get(3));
         exerciseDatas.clear();
+    }
+
+    private String getExerciseByUser(String userID) {
+        StringBuilder exercises = new StringBuilder();
+        StatementResult statementResult = GraphDAO.getInstance().getExerciseByUser(userID);
+
+        while(statementResult.hasNext()) {
+            Record record = statementResult.next();
+            String exerciseID = record.get(0).asString().substring(1);
+            Document exercise = DocumentDAO.getInstance().getExercise(exerciseID);
+            exercises.append(exerciseID).append("\t\t").append(exercise.get("statment")).append("\n");
+        }
+        if(exercises.toString().isEmpty()) {
+            exercises.append("Aucun exercice trouvé");
+        }
+        else {
+            exercises.insert(0, "id \t\t Énoncé\n");
+        }
+        return exercises.toString();
     }
 
 }
