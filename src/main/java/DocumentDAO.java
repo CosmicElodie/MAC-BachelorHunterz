@@ -4,46 +4,48 @@
  * https://howtodoinjava.com/mongodb/mongodb-find-documents/
  */
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import javax.print.Doc;
+import java.util.List;
+import java.util.logging.Level;
 
 import static com.mongodb.client.model.Filters.eq;
 
 public class DocumentDAO {
-    private DocumentDAO documentDAO;
+    private static DocumentDAO documentDAO;
     private MongoClient mongoClient;
-    MongoClientURI connectionString = new MongoClientURI("mongodb://localhost:27017");
-    MongoDatabase database = mongoClient.getDatabase("bachelorhunterz");
-    MongoCollection<Document> collection = database.getCollection("exercise");
+    private MongoDatabase database;
+    private MongoClientURI connectionString = new MongoClientURI("mongodb://localhost:27017");
+    private MongoCollection<Document> collection;
 
-    public DocumentDAO getInstance() {
+    private DocumentDAO(){}
+    public static DocumentDAO getInstance() {
         if(documentDAO == null) {
             documentDAO = new DocumentDAO();
         }
         return documentDAO;
     }
 
-    public MongoDatabase getDatabase(String databaseName) {
+    public MongoDatabase getDatabase() {
         mongoClient = new MongoClient(connectionString);
-        return mongoClient.getDatabase(databaseName);
+        return mongoClient.getDatabase("bachelorhunterz");
     }
 
-    public void check(String firstname, String lastname, int userID, String username) {
+    public void check(String firstname, String lastname, Integer userID, String username) {
+        java.util.logging.Logger.getLogger("org.mongodb.driver").setLevel(Level.OFF);
+        database = getDatabase();
         collection = database.getCollection("user");
 
         long found = collection.count(Document.parse("{id : " + Integer.toString(userID) + "}"));
         if (found == 0) {
-            Document doc = new Document("firstname", firstname)
-                    .append("lastname", lastname)
+            Document doc = new Document("first_name", firstname)
+                    .append("last_name", lastname)
                     .append("id", userID)
                     .append("username", username);
             collection.insertOne(doc);
@@ -58,11 +60,14 @@ public class DocumentDAO {
     }
 
     public Document getUser(String userID) {
+        MongoDatabase database = getDatabase( );
         MongoCollection<Document> collection = database.getCollection("user");
         return collection.find(eq("id", Integer.parseInt(userID))).first();
     }
 
     public ObjectId addExercise(String courseName, String teacherInitials, String statment, String correction){
+        MongoDatabase database = getDatabase( );
+        MongoCollection<Document> collection = database.getCollection("exercise");
         Document document = new Document("course", courseName)
                 .append("teacher", teacherInitials)
                 .append("statment", statment)
@@ -71,12 +76,13 @@ public class DocumentDAO {
         return (ObjectId) document.get("_id");
     }
 
+
     public Document getExercise(String exerciseID) {
         return collection.find(Filters.eq("_id", exerciseID)).first();
     }
 
     public Document getExerciseByCourse(String course) {
-        return collection.find(Filters.eq("course", course)).first();;
+        return collection.find(Filters.eq("course", course)).first();
     }
 
     public Document getExerciseByTeacher(String teacherInitials) {
