@@ -32,7 +32,7 @@ public class GraphDAO implements AutoCloseable {
         return graphDAO;
     }
 
-    private void addExercise(long userID, String exerciseID) {
+    void addExercise(long userID, String exerciseID) {
         List<String> collections = new LinkedList<>();
         collections.add("Exercise");
         addNode("_" + exerciseID, collections);

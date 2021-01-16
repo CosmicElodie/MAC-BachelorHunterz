@@ -3,7 +3,6 @@
  * https://www.youtube.com/watch?v=xv-FYOizUSY
  */
 
-import com.mongodb.client.FindIterable;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.neo4j.driver.v1.*;
@@ -106,7 +105,7 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                     isCreatingExercise = false;
                     isCorrectionCorrect = true;
                     exerciseDatas.add(userCommand);
-                    addExerciseToDatabase((long) userID);
+                    addExerciseToDatabases((long) userID);
                     messageToUser.setText("Votre exercice a bien été ajouté à la base de données !");
                 }
             }
@@ -190,8 +189,15 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         return teacherName.length() == 3;
     }
 
-    private void addExerciseToDatabase(Long userID) {
-        ObjectId exerciseId = DocumentDAO.getInstance().addExercise(exerciseDatas.get(0), exerciseDatas.get(1), exerciseDatas.get(2), exerciseDatas.get(3));
+    private void addExerciseToDatabases(Long userID) {
+        //On ajoute l'exercice dans MongoDB
+        ObjectId exerciseId = DocumentDAO.getInstance().addExercise(exerciseDatas.get(0), exerciseDatas.get(1),
+                exerciseDatas.get(2), exerciseDatas.get(3));
+
+        //On ajoute l'exercice dans Neo4J
+        GraphDAO.getInstance().addExercise(userID,exerciseId.toString());
+
+        //On nettoie la variable locale au bot
         exerciseDatas.clear();
     }
 

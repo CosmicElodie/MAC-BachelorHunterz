@@ -92,5 +92,4 @@ public class DocumentDAO {
         return collection.find(Filters
                 .and(Filters.eq("teacher", teacher), Filters.eq("course", course))).first();
     }
-
 }
