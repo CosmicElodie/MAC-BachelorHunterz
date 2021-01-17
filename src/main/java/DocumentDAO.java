@@ -11,6 +11,7 @@
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -47,8 +48,8 @@ public class DocumentDAO {
 
         long found = collection.count(Document.parse("{id : " + Integer.toString(userID) + "}"));
         if (found == 0) {
-            Document doc = new Document("first_name", firstname)
-                    .append("last_name", lastname)
+            Document doc = new Document("firstname", firstname)
+                    .append("lastname", lastname)
                     .append("id", userID)
                     .append("username", username);
             collection.insertOne(doc);
@@ -65,7 +66,7 @@ public class DocumentDAO {
     }
 
     public ObjectId addExercise(String courseName, String teacherInitials, String statment, String correction){
-        MongoDatabase database = getDatabase( );
+        MongoDatabase database = getDatabase();
         MongoCollection<Document> collection = database.getCollection("exercise");
         Document document = new Document("course", courseName)
                 .append("teacher", teacherInitials)
@@ -77,19 +78,29 @@ public class DocumentDAO {
 
 
     public Document getExercise(String exerciseID) {
+        MongoDatabase database = mongoClient.getDatabase("bachelorhunterz");
+        collection = database.getCollection("exercise");
         return collection.find(Filters.eq("_id", exerciseID)).first();
     }
 
-    public Document getExerciseByCourse(String course) {
-        return collection.find(Filters.eq("course", course)).first();
+    public FindIterable<Document> getExercisesByCourse(String course) {
+        MongoDatabase database = getDatabase();
+        collection = database.getCollection("exercise");
+        return collection.find(Filters.eq("course", course));
     }
 
-    public Document getExerciseByTeacher(String teacherInitials) {
-        return collection.find(Filters.eq("teacher", teacherInitials)).first();
+    //OK - renvoie qqchse
+    public FindIterable<Document> getExercisesByTeacher(String teacherSigle) {
+        MongoDatabase database = getDatabase();
+        collection = database.getCollection("exercise");
+        return collection.find(Filters.eq("teacher", teacherSigle));
     }
 
-    public Document getExerciseByTeacherAndCourse (String teacher, String course) {
+    public FindIterable<Document> getExercisesByTeacherAndCourse(String teacher, String course) {
+        MongoDatabase database = getDatabase();
+        collection = database.getCollection("exercise");
         return collection.find(Filters
-                .and(Filters.eq("teacher", teacher), Filters.eq("course", course))).first();
+                .and(Filters.eq("teacher", teacher), Filters.eq("course", course)));
     }
+
 }

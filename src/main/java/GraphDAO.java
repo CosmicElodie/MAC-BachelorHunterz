@@ -5,8 +5,8 @@
  * https://neo4j.com/download-thanks-desktop/?edition=desktop&flavour=winstall64&release=1.3.11&offline=true#installation-guide
  */
 
-import org.neo4j.driver.v1.*;
-
+import org.neo4j.driver.GraphDatabase;
+import org.neo4j.driver.*;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -22,7 +22,7 @@ public class GraphDAO implements AutoCloseable {
     }
 
     private GraphDAO() {
-        driver = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic( "neo4j", "bot123"));
+        driver = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "bot123"));
     }
 
     static GraphDAO getInstance() {
@@ -38,8 +38,8 @@ public class GraphDAO implements AutoCloseable {
         addNode("_" + exerciseID, collections);
 
         addNode("_" + userID, Collections.singletonList("User"));
-        runRequest("MATCH (usr: User{name:'_" + userID + "' })," +
-                "(xrc:Exercise{ statment: '_" + exerciseID + "'})\n" +
+        runRequest("MATCH (usr: User{name:'" + userID + "' })," +
+                "(xrc:Exercise{ statment: '" + exerciseID + "'})\n" +
                 "CREATE (usr)-[:PROPOSED{date:datetime()}]->(xrc)");
     }
 
@@ -51,13 +51,15 @@ public class GraphDAO implements AutoCloseable {
         runRequest("MERGE (" + args + "{name:'" + id + "'})");
     }
 
-    private StatementResult runRequest(String request) {
+    private Result runRequest(String request) {
         try (Session session = driver.session()) {
-            return (StatementResult) session.run(request);
+            return session.run(request);
         }
     }
 
-    public StatementResult getExerciseByUser(String user) {
-        return runRequest("MATCH (u:User)-[:PROPOSED]->(e:Exercise) WHERE u.username = '_" + user + "' RETURN e.statment;");
-    }
+    public Result getExercisesByUser(String user) {
+        try (Session session = driver.session()) {
+            return session.run("MATCH (u:User)-[:PROPOSED]->(e:Exercise) WHERE u.name = '" + user + "' RETURN e.statment;");
+        }
+      }
 }
