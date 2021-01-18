@@ -7,7 +7,10 @@
 
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.*;
+import org.neo4j.fabric.stream.StatementResult;
+import scala.math.Ordering;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,40 +29,126 @@ public class GraphDAO implements AutoCloseable {
     }
 
     static GraphDAO getInstance() {
-        if(graphDAO == null) {
+        if (graphDAO == null) {
             graphDAO = new GraphDAO();
         }
         return graphDAO;
     }
 
     void addExercise(long userID, String exerciseID) {
+        StringBuilder args;
+        String id;
         List<String> collections = new LinkedList<>();
         collections.add("Exercise");
-        addNode("_" + exerciseID, collections);
-
-        addNode("_" + userID, Collections.singletonList("User"));
-        runRequest("MATCH (usr: User{name:'" + userID + "' })," +
-                "(xrc:Exercise{ statment: '" + exerciseID + "'})\n" +
-                "CREATE (usr)-[:PROPOSED{date:datetime()}]->(xrc)");
-    }
-
-    void addNode(String id, List<String> collections) {
-        StringBuilder args = new StringBuilder(id);
+        id = "_" + exerciseID;
+        args = new StringBuilder(id);
         for (String c : collections) {
             args.append(":").append(c);
         }
-        runRequest("MERGE (" + args + "{name:'" + id + "'})");
+        performRequest("MERGE (" + args + "{exerciseID:'" + id + "'})");
+
+        id = "_" + userID;
+        args = new StringBuilder(id);
+        collections = Collections.singletonList("User");
+
+        for (String c : collections) {
+            args.append(":").append(c);
+        }
+        performRequest("MERGE (" + args + "{userID:'" + id + "'})");
+
+        //ajoute le lien entre les deux
+        performRequest("MATCH (usr: User{userID:'" + "_" + userID + "' })\n" +
+                "MATCH (xrc:Exercise{ exerciseID: '" + "_" + exerciseID + "'})\n" +
+                "CREATE (usr)-[:PROPOSED{date:datetime()}]->(xrc)");
     }
 
-    private Result runRequest(String request) {
+    private Result performRequest(String request) {
         try (Session session = driver.session()) {
             return session.run(request);
         }
     }
 
-    public Result getExercisesByUser(String user) {
+    public List<String> getExercisesByUser(String userID) {
         try (Session session = driver.session()) {
-            return session.run("MATCH (u:User)-[:PROPOSED]->(e:Exercise) WHERE u.name = '" + user + "' RETURN e.statment;");
+            return session.readTransaction(tx -> {
+                List<String> exercises = new ArrayList<>();
+                Result result = tx.run("MATCH (u:User)-[:PROPOSED]->(e:Exercise) WHERE u.userID = '" + "_" + userID + "' RETURN e.exerciseID;");
+                while (result.hasNext()) {
+                    exercises.add(result.next().get(0).asString());
+                }
+                return exercises;
+            });
         }
-      }
+    }
+
+    public List<String> getTopUsers() {
+        try (Session session = driver.session()) {
+            return session.readTransaction(tx -> {
+                List<String> users = new ArrayList<>();
+                Result result = tx.run("MATCH (e:Exercise)<-[:PROPOSED]-(u:User)\n"
+                        + "RETURN u.userID, count(*) AS cnt\n"
+                        + "ORDER BY cnt DESC LIMIT 10");
+                while (result.hasNext()) {
+                    users.add(result.next().get(0).asString());
+                }
+                return users;
+            });
+        }
+    }
+
+    void addLike(String currentUserID, String exerciseIDLiked) {
+        String userID = "_" + exerciseIDLiked;
+            performRequest("MATCH (u: User), (e:Exercise)" + "\n" +
+                    "WHERE u.userID = '" + currentUserID + "' AND e.exerciseID = '" + userID + "'" + "\n" +
+                    "CREATE (u)-[l:LIKE]->(e)");
+    }
+
+    public List<String> getUsersByExerciseID(String exerciseID) {
+        try (Session session = driver.session()) {
+            return session.readTransaction(tx -> {
+                List<String> users = new ArrayList<>();
+                Result result = tx.run ("MATCH (u:User)--(e:Exercise{ exerciseID:':_" + exerciseID
+                        + "'}) RETURN u.userID");
+                while(result.hasNext())
+                {
+                    users.add(result.next().get(0).asString());
+                }
+                return users;
+            });
+        }
+    }
+
+    public List<String> getExercisesLiked(String userID) {
+        try (Session session = driver.session()) {
+            return session.readTransaction(tx -> {
+                List<String> exercises = new ArrayList<>();
+                Result result = tx.run ("MATCH (u:User)-[l:LIKE]->(e:Exercise)" +"\n" +
+                        "WHERE u.userID = '_" + userID + "'" + "\n" +
+                        "RETURN e.exerciseID");
+                while(result.hasNext())
+                {
+                    exercises.add(result.next().get(0).asString());
+                }
+                return exercises;
+            });
+        }
+    }
+
+    public List<String> getExercisesRecommandation(String userID) {
+        try(Session session = driver.session()) {
+            return session.readTransaction(tx -> {
+                List<String> exercises = new ArrayList<>();
+                Result result = tx.run(
+                        "MATCH (u1:User{userID: '_" + userID + "'})-[l:LIKE]->(e:Exercice)<-[:PROPOSE]-(u2:User)-[PROPOSE]->(e2:Exercice)<-[l2:LIKE]-(u3:User)\n" +
+                                "RETURN e2, COUNT(*)\n" +
+                                "ORDER BY COUNT(*) DESC\n" +
+                                "LIMIT 5");
+                while(result.hasNext()) {
+                    exercises.add(result.next().get(0).asString());
+                }
+                return exercises;
+            });
+        }
+    }
+
 }

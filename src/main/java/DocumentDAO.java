@@ -9,15 +9,19 @@
  * https://howtodoinjava.com/mongodb/java-mongodb-insert-documents-in-collection-examples/
  */
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.logging.Level;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -30,7 +34,7 @@ public class DocumentDAO {
     private MongoCollection<Document> collection;
 
     public static DocumentDAO getInstance() {
-        if(documentDAO == null) {
+        if (documentDAO == null) {
             documentDAO = new DocumentDAO();
         }
         return documentDAO;
@@ -41,31 +45,39 @@ public class DocumentDAO {
         return mongoClient.getDatabase("bachelorhunterz");
     }
 
-    public void check(String firstname, String lastname, Integer userID, String username) {
+    public boolean checkIfUserExists(String firstname, String lastname, Integer userID, String username, LinkedList<String> courses) {
         java.util.logging.Logger.getLogger("org.mongodb.driver").setLevel(Level.OFF);
         database = getDatabase();
         collection = database.getCollection("user");
 
-        long found = collection.count(Document.parse("{id : " + Integer.toString(userID) + "}"));
-        if (found == 0) {
-            Document doc = new Document("firstname", firstname)
-                    .append("lastname", lastname)
-                    .append("id", userID)
-                    .append("username", username);
-            collection.insertOne(doc);
-            System.out.println(firstname + " doesn't exist in database.");
-        } else {
-            System.out.println(firstname + " aka " + username + " performed an action !");
+        //Si on a arrive à récupérer son ID, c'est qu'il existe.
+        long subscribed = collection.count(Document.parse("{id : " + Integer.toString(userID) + "}"));
+        if (subscribed == 0) {
+            return false;
+            //inscriptionUserDatabase(firstname, lastname, userID, username, courses);
+        }
+        else {
+            return true;
         }
     }
 
+    public void inscriptionUserDatabase(String firstname, String lastname, Integer userID, String username, LinkedList<String> courses) {
+        Document doc = new Document("firstname", firstname)
+                .append("lastname", lastname)
+                .append("id", userID)
+                .append("username", username)
+                .append("courses", courses);
+        collection.insertOne(doc);
+        System.out.println(firstname + " a bien été inscrit !");
+    }
+
     public Document getUser(String userID) {
-        MongoDatabase database = getDatabase( );
+        MongoDatabase database = getDatabase();
         MongoCollection<Document> collection = database.getCollection("user");
         return collection.find(eq("id", Integer.parseInt(userID))).first();
     }
 
-    public ObjectId addExercise(String courseName, String teacherInitials, String statment, String correction){
+    public ObjectId addExercise(String courseName, String teacherInitials, String statment, String correction) {
         MongoDatabase database = getDatabase();
         MongoCollection<Document> collection = database.getCollection("exercise");
         Document document = new Document("course", courseName)
@@ -76,11 +88,10 @@ public class DocumentDAO {
         return (ObjectId) document.get("_id");
     }
 
-
     public Document getExercise(String exerciseID) {
-        MongoDatabase database = mongoClient.getDatabase("bachelorhunterz");
+        MongoDatabase database = getDatabase();
         collection = database.getCollection("exercise");
-        return collection.find(Filters.eq("_id", exerciseID)).first();
+        return collection.find(new BasicDBObject("_id", new ObjectId(exerciseID))).first();
     }
 
     public FindIterable<Document> getExercisesByCourse(String course) {
@@ -89,7 +100,6 @@ public class DocumentDAO {
         return collection.find(Filters.eq("course", course));
     }
 
-    //OK - renvoie qqchse
     public FindIterable<Document> getExercisesByTeacher(String teacherSigle) {
         MongoDatabase database = getDatabase();
         collection = database.getCollection("exercise");
@@ -101,6 +111,19 @@ public class DocumentDAO {
         collection = database.getCollection("exercise");
         return collection.find(Filters
                 .and(Filters.eq("teacher", teacher), Filters.eq("course", course)));
+    }
+
+    public FindIterable<Document> getUserbyUsername(String username) {
+        MongoDatabase database = getDatabase();
+        collection = database.getCollection("user");
+        return collection.find(Filters.eq("username", username));
+    }
+
+    public Document getRandomExercise() {
+        MongoDatabase database = getDatabase();
+        collection = database.getCollection("exercise");
+        return collection.aggregate(Arrays.asList(Aggregates.sample(1))).first();
+
     }
 
 }
