@@ -5,11 +5,8 @@
  */
 
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.neo4j.driver.Record;
-import org.neo4j.driver.Result;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -17,7 +14,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import javax.print.Doc;
 import java.util.*;
 
 import static java.lang.Math.toIntExact;
@@ -56,7 +52,6 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
 
         //On récupère les infos utilisateur
         int userID = toIntExact(update.getMessage().getChat().getId());
-        System.out.println("USERID : " + userID);
         String username = update.getMessage().getChat().getUserName();
         String firstname = update.getMessage().getChat().getFirstName();
         String lastname = update.getMessage().getChat().getLastName();
@@ -68,8 +63,6 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
 
             SendMessage messageToUser = new SendMessage();
             messageToUser.setChatId(update.getMessage().getChatId());
-
-            System.out.println("Commande entrée : " + userCommand);
 
             if (DocumentDAO.getInstance().checkIfUserExists(firstname, lastname, userID, username, coursesFollowed)) {
                 //On check si l'utilisateur veut stopper une création d'exo qu'il a initiée.
@@ -134,12 +127,20 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                                             "/exercisesbyteacher <SIGLE_TEACHER> - affiche les exercices créés par le professeur spécifié.\n" +
                                             "/exercisesbycourse <SIGLE_COURSE> - affiche les exercices créés pour le cours spécifié.\n" +
                                             "/exercisesbyteacherandcourse <SIGLE_PROFESSEUR> <SIGLE_COURS> - affiche les exercices créés par un professeur pour un cours spécifié.\n" +
+                                            "/exercisesliked - affiche les exercices likés\n" +
+                                            "/getUserByUsername <username> - afficher un utilisateur selon son username\n" +
                                             "/informCourses <COURSES_LIST> - permet de renseigner les cours suivis par l'utilisateur dans la BDD lors de l'inscription\n" +
-                                            "/topUsers - Affiche les utilisateurs ayant insérés le plus d'exercices\n"
+                                            "/randomexercise - affiche un exercice aléatoire\n" +
+                                            "/recommandations - affiche un exercice recommandé selon les likes\n" +
+                                            "/topUsers - affiche les utilisateurs ayant insérés le plus d'exercices\n" +
+                                            "/topusersexerciseliked - afficher le top des utilisateurs ayant insérés le plus d'exercices et dont on a aimé un exercice\n"
                             );
                             break;
                         case "/topusers":
                             messageToUser.setChatId(chatID).setText(topUsers());
+                            break;
+                        case "/topusersexerciseliked" :
+                            messageToUser.setChatId(chatID).setText(topUsersExerciseLiked("" + userID));
                             break;
                         case "/randomexercise":
                             Document randomExercise = DocumentDAO.getInstance().getRandomExercise();
@@ -157,11 +158,12 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                             markupInline.setKeyboard(rowsInline);
                             messageToUser.setReplyMarkup(markupInline);
                             break;
-                        case "/exercisesLiked" :
+                        case "/exercisesliked" :
                             messageToUser.setChatId(chatID).setText(getExercisesLiked("" + userID));
                             break;
                         case "/recommandations" :
                             messageToUser.setChatId(chatID).setText(getExercisesRecommandation("" + userID));
+                            break;
                         default:
                             if (userCommand.startsWith("/newexercise ")) {
                                 isCreatingExercise = true;
@@ -175,25 +177,12 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                                     messageToUser.setText("Le cours spécifié n'existe pas ou est mal orthographié.\n" +
                                             "Exemple : Sigle du cours d'Informatique 1 -> INF1");
                                 }
-                            } else if (userCommand.startsWith("/getUserByUsername ")) { //TODO
+                            } else if (userCommand.startsWith("/getUserByUsername ")) {
                                 messageToUser.setText(getUserByUsername(userCommand.substring(19)));
                             } else if (userCommand.startsWith("/exercisesbyuser ")) {
-                                System.out.println("DEBUG : " + userID);
                                 String specifiedUser = userCommand.substring(17);
                                 if (specifiedUser.length() > 0) {
                                     messageToUser.setText(getExercisesByUser(specifiedUser));
-
-                                    /*
-                                    //On permet de liker cet user
-                                    InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-                                    List<List<InlineKeyboardButton>> rowsInline = new LinkedList<>();
-                                    List<InlineKeyboardButton> rowInline = new LinkedList<>();
-                                    rowInline.add(new InlineKeyboardButton().setText("Suivre cet utilisateur").setCallbackData("Suivre" + userID + " _" + specifiedUser));
-                                    rowsInline.add(rowInline);
-                                    markup.setKeyboard(rowsInline);
-                                    messageToUser.setReplyMarkup(markup);
-                                    */
-
                                 } else {
                                     messageToUser.setText("Veuillez spécifier le pseudo d'un utilisateur");
                                 }
@@ -217,7 +206,6 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                             } else if (userCommand.startsWith("/exercisesbyteacherandcourse ")) {
                                 String speciefiedTeacher = userCommand.substring(29, 32);
                                 String specifiedCourse = userCommand.substring(33);
-                                System.out.println("DEBUG : " + speciefiedTeacher + "-" + specifiedCourse + "-");
                                 if (courses.contains(specifiedCourse)) {
                                     messageToUser.setChatId(chatID).setText("Exercices données par le professeur " + speciefiedTeacher + " pour le cours de " + specifiedCourse + ":\n\n"
                                             + getExercisesByTeacherAndCourse(speciefiedTeacher, specifiedCourse));
@@ -259,7 +247,7 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         }
         else if(update.hasCallbackQuery()) {
             String call_data = update.getCallbackQuery().getData();
-            System.out.println("CALL_DATA : " + call_data);
+            //System.out.println("CALL_DATA : " + call_data); //POUR LE DEBUG
             if(call_data.startsWith("Like ")) {
                String exerciseIDLiked = call_data.substring(5);
                 GraphDAO.getInstance().addLike("_" + userID, exerciseIDLiked);
@@ -304,6 +292,11 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         exerciseDatas.clear();
     }
 
+    /**
+     * Permet de chercher les informations d'un utilisateur selon son username.
+     * @param username : username de l'utilisateur
+     * @return diverses infos de l'utilisateur recherché
+     */
     private String getUserByUsername(String username) {
         if (username.isEmpty()) {
             return "L'username spécifié est vide.";
@@ -311,10 +304,29 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
             StringBuilder userFound = new StringBuilder();
             FindIterable<Document> userPointer = DocumentDAO.getInstance().getUserbyUsername(username);
             for (Document user : userPointer) {
-                userFound.append("Username : ").append(user.get("username")).append("\n\n");
-                String followedCourses = user.get("courses").toString();
-                System.out.println("++++++++++++++++++++++++");
-                System.out.println(followedCourses);
+                userFound.append("Username : ").append(user.get("username")).append("\n")
+                        .append("ID : ").append(user.get("id")).append("\n")
+                        .append("Prénom : ").append(user.get("firstname")).append("\n")
+                        .append("Nom : ").append(user.get("lastname")).append("\n")
+                        .append("Cours suivis : \n");
+
+                StringBuilder followedCourses = new StringBuilder();
+                followedCourses.append(user.get("courses"));
+
+                String[] courses = followedCourses.toString().split(",");
+
+                for(int i = 0; i < courses.length; ++i) {
+                    if(i == 0) {
+                        userFound.append("- ").append(courses[i].substring(1)).append("\n");
+                    }
+                    else if(i == courses.length-1) {
+                        userFound.append("- ").append(courses[i].substring(0, courses[i].length()-1)).append("\n");
+                    }
+                    else {
+                        userFound.append("- ").append(courses[i]).append("\n");
+
+                    }
+                }
             }
             return userFound.toString();
         }
@@ -329,12 +341,15 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
     private String getExercisesByUser(String userID) {
         StringBuilder exercises = new StringBuilder();
         List<String> result = GraphDAO.getInstance().getExercisesByUser(userID);
-        //System.out.println("DEBUG RESULT : " + result);
 
         for (String r : result) {
             String exerciseID = r.substring(1); //on enlève l'underscore
             Document exercise = DocumentDAO.getInstance().getExercise(exerciseID);
-            exercises.append("ID Neo4J exercice : ").append(exerciseID).append("\n\n")
+            exercises
+                    .append("PROFESSEUR : ").append(exercise.get("teacher")).append("\n\n")
+                    .append("COURS : ").append(exercise.get("course")).append("\n\n")
+                    .append("- ÉNONCÉ -\n").append(exercise.get("statment")).append("\n\n")
+                    .append("- CORRECTION -\n").append(exercise.get("correction")).append("\n\n")
                     .append("- - - - - - - - -\n\n");
 
         }
@@ -347,7 +362,11 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         return exercises.toString() + "\n";
     }
 
-    //OK
+    /**
+     * Permet de rechercher les exercices par professeur.
+     * @param teacherName : le sigle du prof. Ex : JHH
+     * @return la liste des cours liés au professeur
+     */
     private String getExercisesByTeacher(String teacherName) {
         StringBuilder exercisesFound = new StringBuilder();
         FindIterable<Document> exercisesPointer = DocumentDAO.getInstance().getExercisesByTeacher(teacherName);
@@ -364,6 +383,11 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         return exercisesFound.toString();
     }
 
+    /**
+     * Permet de rechercher les exercices par cours.
+     * @param courseName : le sigle du cours. Ex : MAC
+     * @return la liste des cours liés au cours
+     */
     private String getExercisesByCourse(String courseName) {
         StringBuilder exercisesFound = new StringBuilder();
         FindIterable<Document> exercisesPointer = DocumentDAO.getInstance().getExercisesByCourse(courseName);
@@ -381,6 +405,12 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         return exercisesFound.toString();
     }
 
+    /**
+     * Permet de rechercher les exercices par professeur et par cours.
+     * @param teacher : le sigle du prof
+     * @param courseName : le sigle du cours
+     * @return la liste des exercices
+     */
     private String getExercisesByTeacherAndCourse(String teacher, String courseName) {
         StringBuilder exercisesFound = new StringBuilder();
         FindIterable<Document> exercisesPointer = DocumentDAO.getInstance().getExercisesByTeacherAndCourse(teacher, courseName);
@@ -397,6 +427,10 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         return exercisesFound.toString();
     }
 
+    /**
+     * Affiche les 10 premiers utilisateurs qui ont inséré le plus d'exercice, par ordre décroissant.
+     * @return
+     */
     private String topUsers() {
         StringBuilder result = new StringBuilder("TOP UTILISATEURS : \n");
         List<String> users = GraphDAO.getInstance().getTopUsers();
@@ -414,6 +448,30 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         return result.toString();
     }
 
+    /**
+     * Afficher les 5 premiers utilisateurs qui ont inséré le plus d'exercice, par ordre décroissant
+     */
+    private String topUsersExerciseLiked(String currentUserID) {
+        StringBuilder result = new StringBuilder("TOP UTILISATEURS DONT ON A AIMÉ UN EXERCICE: \n");
+        List<String> users = GraphDAO.getInstance().getTopUsersWithALikedExercise(currentUserID);
+        int nb = 0;
+        for (String u : users) {
+            String userID = u.substring(1); //on enlève l'underscore
+            Document user = DocumentDAO.getInstance().getUser(userID);
+            result.append(++nb + " : ").append(user.get("firstname")).append(" ").append(user.get("lastname")).append("\n");
+        }
+        if (users.toString().equals("")) {
+            result.append("Aucun utilisateur trouvé");
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Afficher un exercice selon son id.
+     * @param exerciseID : l'id de l'exercice
+     * @return l'exercice
+     */
     private String getExerciseById(String exerciseID) {
         Document documentation = DocumentDAO.getInstance().getExercise(exerciseID);
         List<String> users = GraphDAO.getInstance().getUsersByExerciseID(exerciseID);
@@ -436,6 +494,11 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         return exercise.toString();
     }
 
+    /**
+     * Affiche les exercices qu'on a liké
+     * @param userID : l'user qui a liké les exercices
+     * @return une liste d'exercices
+     */
     private String getExercisesLiked(String userID) {
         Document documentation = DocumentDAO.getInstance().getUser(userID);
         List<String> exercisesLiked = GraphDAO.getInstance().getExercisesLiked(userID);
@@ -460,6 +523,11 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
         return exercises.toString();
     }
 
+    /**
+     * Afficher les exercices recommandés.
+     * @param userID : notre id
+     * @return une liste d'exercices recommandé
+     */
     private String getExercisesRecommandation(String userID) {
         Document documentation = DocumentDAO.getInstance().getUser(userID);
         List<String> exercisesRecommanded = GraphDAO.getInstance().getExercisesRecommandation(userID);

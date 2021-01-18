@@ -7,8 +7,6 @@
 
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.*;
-import org.neo4j.fabric.stream.StatementResult;
-import scala.math.Ordering;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,19 +96,18 @@ public class GraphDAO implements AutoCloseable {
 
     void addLike(String currentUserID, String exerciseIDLiked) {
         String userID = "_" + exerciseIDLiked;
-            performRequest("MATCH (u: User), (e:Exercise)" + "\n" +
-                    "WHERE u.userID = '" + currentUserID + "' AND e.exerciseID = '" + userID + "'" + "\n" +
-                    "CREATE (u)-[l:LIKE]->(e)");
+        performRequest("MATCH (u: User), (e:Exercise)" + "\n" +
+                "WHERE u.userID = '" + currentUserID + "' AND e.exerciseID = '" + userID + "'" + "\n" +
+                "CREATE (u)-[l:LIKE]->(e)");
     }
 
     public List<String> getUsersByExerciseID(String exerciseID) {
         try (Session session = driver.session()) {
             return session.readTransaction(tx -> {
                 List<String> users = new ArrayList<>();
-                Result result = tx.run ("MATCH (u:User)--(e:Exercise{ exerciseID:':_" + exerciseID
+                Result result = tx.run("MATCH (u:User)--(e:Exercise{ exerciseID:':_" + exerciseID
                         + "'}) RETURN u.userID");
-                while(result.hasNext())
-                {
+                while (result.hasNext()) {
                     users.add(result.next().get(0).asString());
                 }
                 return users;
@@ -122,11 +119,10 @@ public class GraphDAO implements AutoCloseable {
         try (Session session = driver.session()) {
             return session.readTransaction(tx -> {
                 List<String> exercises = new ArrayList<>();
-                Result result = tx.run ("MATCH (u:User)-[l:LIKE]->(e:Exercise)" +"\n" +
+                Result result = tx.run("MATCH (u:User)-[l:LIKE]->(e:Exercise)" + "\n" +
                         "WHERE u.userID = '_" + userID + "'" + "\n" +
                         "RETURN e.exerciseID");
-                while(result.hasNext())
-                {
+                while (result.hasNext()) {
                     exercises.add(result.next().get(0).asString());
                 }
                 return exercises;
@@ -135,18 +131,33 @@ public class GraphDAO implements AutoCloseable {
     }
 
     public List<String> getExercisesRecommandation(String userID) {
-        try(Session session = driver.session()) {
+        try (Session session = driver.session()) {
             return session.readTransaction(tx -> {
                 List<String> exercises = new ArrayList<>();
                 Result result = tx.run(
-                        "MATCH (u1:User{userID: '_" + userID + "'})-[l:LIKE]->(e:Exercice)<-[:PROPOSE]-(u2:User)-[PROPOSE]->(e2:Exercice)<-[l2:LIKE]-(u3:User)\n" +
+                        "MATCH (u1:User{userID: '_" + userID + "'})-[l1:LIKE]->(e:Exercice)<-[:PROPOSED]-(u2:User)-[:PROPOSED]->(e2:Exercice)<-[l3:LIKE]-(u3:User)\n" +
                                 "RETURN e2, COUNT(*)\n" +
                                 "ORDER BY COUNT(*) DESC\n" +
                                 "LIMIT 5");
-                while(result.hasNext()) {
+                while (result.hasNext()) {
                     exercises.add(result.next().get(0).asString());
                 }
                 return exercises;
+            });
+        }
+    }
+
+    public List<String> getTopUsersWithALikedExercise(String userID) {
+        try (Session session = driver.session()) {
+            return session.readTransaction(tx -> {
+                List<String> users = new ArrayList<>();
+                Result result = tx.run("MATCH (u1:User{userID: '_" + userID + "'})-[l:LIKE]->(e:Exercise)<-[p:PROPOSED]-(u2:User)\n"
+                        + "RETURN u2.userID, count(*) AS cnt\n"
+                        + "ORDER BY cnt DESC LIMIT 10");
+                while (result.hasNext()) {
+                    users.add(result.next().get(0).asString());
+                }
+                return users;
             });
         }
     }
