@@ -134,7 +134,7 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                                             "/informcourses <COURSES_LIST> - permet de renseigner les cours suivis par l'utilisateur dans la BDD lors de l'inscription\n" +
                                             "/randomexercise - affiche un exercice aléatoire\n" +
                                             "/recommandations - affiche un exercice recommandé selon les likes\n" +
-                                            "/topUsers - affiche les utilisateurs ayant insérés le plus d'exercices\n" +
+                                            "/topusers - affiche les utilisateurs ayant insérés le plus d'exercices\n" +
                                             "/topusersexerciseliked - afficher le top des utilisateurs ayant inséré le plus d'exercices et dont on a aimé un exercice\n"
                             );
                             break;
