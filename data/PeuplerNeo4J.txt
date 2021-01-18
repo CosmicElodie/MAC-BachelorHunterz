@@ -1,0 +1,115 @@
+CREATE (t:Teacher { teacherID: 'JHH', courses: ['GRE', 'SIO', 'MAD', 'ANA'] })
+CREATE (t2:Teacher { teacherID: 'NFI', courses: ['BDR', 'MAC'] })
+CREATE (t3:Teacher { teacherID: 'OLI', courses: ['AMT', 'PDG', 'RES'] })
+CREATE (t4:Teacher { teacherID: 'PDO', courses: ['POO1', 'POO2', 'MCR'] })
+CREATE (t5:Teacher { teacherID: 'OCE', courses: ['INF1', 'ASD1', 'VTK'] })
+CREATE (t6:Teacher { teacherID: 'PLE', courses: ['AMT', 'PRR', 'GEN'] })
+CREATE (t7:Teacher { teacherID: 'JER', courses: ['RES', 'TIB'] })
+CREATE (t9:Teacher { teacherID: 'EBX', courses: ['GET'] })
+CREATE (t10:Teacher { teacherID: 'BCS', courses: ['GEN', 'POO1', 'TWEB'] })
+CREATE (t11:Teacher { teacherID: 'MDK', courses: ['ASD1', 'ASD2', 'PLP'] })
+CREATE (t12:Teacher { teacherID: 'ADC', courses: ['SEC', 'POO1'] })
+CREATE (t13:Teacher { teacherID: 'MGF', courses: ['POO1', 'INF1'] })
+CREATE (t14:Teacher { teacherID: 'RMQ', courses: ['ARO1', 'ARO2'] })
+CREATE (t15:Teacher { teacherID: 'TON', courses: ['ANG1'] })
+CREATE (t16:Teacher { teacherID: 'SPS', courses: ['ISI'] })
+CREATE (t17:Teacher { teacherID: 'JEB', courses: ['PRO'] })
+CREATE (t18:Teacher { teacherID: 'APE', courses: ['ARO1', 'IHM'] })
+CREATE (t19:Teacher { teacherID: 'LRU', courses: ['ASD2'] })
+CREATE (t20:Teacher { teacherID: 'RRH', courses: ['INF1', 'BDR'] })
+CREATE (t21:Teacher { teacherID: 'YTA', courses: ['PCO'] })
+
+CREATE (c:Course {courseID: 'GRE', teacherID: 'JHH'})
+CREATE (c2:Course {courseID: 'SIO', teacherID: 'JHH'})
+CREATE (c3:Course {courseID: 'MAD', teacherID: 'JHH'})
+CREATE (c4:Course {courseID: 'ANA', teacherID: 'JHH'})
+CREATE (c5:Course {courseID: 'BDR', teacherID: 'NFI'})
+CREATE (c6:Course {courseID: 'MAC', teacherID: 'NFI'})
+CREATE (c7:Course {courseID: 'AMT', teacherID: 'OLI'})
+CREATE (c8:Course {courseID: 'PDG', teacherID: 'OLI'})
+CREATE (c9:Course {courseID: 'RES', teacherID: 'OLI'})
+CREATE (c10:Course {courseID: 'POO1', teacherID: 'PDO'})
+CREATE (c11:Course {courseID: 'POO2', teacherID: 'PDO'})
+CREATE (c12:Course {courseID: 'MCR', teacherID: 'PDO'})
+CREATE (c13:Course {courseID: 'INF1', teacherID: 'OCE'})
+CREATE (c14:Course {courseID: 'ASD1', teacherID: 'OCE'})
+CREATE (c15:Course {courseID: 'VTK', teacherID: 'OCE'})
+CREATE (c16:Course {courseID: 'AMT', teacherID: 'PLE'})
+CREATE (c17:Course {courseID: 'PRR', teacherID: 'PLE'})
+CREATE (c18:Course {courseID: 'GEN', teacherID: 'PLE'})
+CREATE (c19:Course {courseID: 'RES', teacherID: 'JER'})
+CREATE (c20:Course {courseID: 'TIB', teacherID: 'JER'})
+CREATE (c21:Course {courseID: 'GET', teacherID: 'EBX'})
+CREATE (c22:Course {courseID: 'GEN', teacherID: 'BCS'})
+CREATE (c23:Course {courseID: 'POO1', teacherID: 'BCS'})
+CREATE (c24:Course {courseID: 'TWEB', teacherID: 'BCS'})
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'JHH' AND c.courseID = 'GRE'
+CREATE (t)-[r:DISPENSE]->(c)
+RETURN type(r)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'JHH' AND c.courseID = 'SIO'
+CREATE (t)-[r1:DISPENSE]->(c)
+RETURN type(r1)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'JHH' AND c.courseID = 'MAD'
+CREATE (t)-[r2:DISPENSE]->(c)
+RETURN type(r2)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'OLI' AND c.courseID = 'AMT'
+CREATE (t)-[r3:DISPENSE]->(c)
+RETURN type(r3)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'OLI' AND c.courseID = 'PDG'
+CREATE (t)-[r4:DISPENSE]->(c)
+RETURN type(r4)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'OLI' AND c.courseID = 'RES'
+CREATE (t)-[r5:DISPENSE]->(c)
+RETURN type(r5)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'JER' AND c.courseID = 'RES'
+CREATE (t)-[r6:DISPENSE]->(c)
+RETURN type(r6)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'JER' AND c.courseID = 'TIB'
+CREATE (t)-[r7:DISPENSE]->(c)
+RETURN type(r7)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'PDO' AND c.courseID = 'POO1'
+CREATE (t)-[r8:DISPENSE]->(c)
+RETURN type(r8)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'PDO' AND c.courseID = 'POO2'
+CREATE (t)-[r9:DISPENSE]->(c)
+RETURN type(r9)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'PDO' AND c.courseID = 'MCR'
+CREATE (t)-[r10:DISPENSE]->(c)
+RETURN type(r10)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'BCS' AND c.courseID = 'GEN'
+CREATE (t)-[r11:DISPENSE]->(c)
+RETURN type(r11)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'BCS' AND c.courseID = 'POO1'
+CREATE (t)-[r12:DISPENSE]->(c)
+RETURN type(r12)
+
+MATCH (t:Teacher), (c:Course)
+WHERE t.teacherID = 'BCS' AND c.courseID = 'TWEB'
+CREATE (t)-[r13:DISPENSE]->(c)
+RETURN type(r13)

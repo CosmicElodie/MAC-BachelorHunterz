@@ -67,7 +67,6 @@ public class DocumentDAO {
                 .append("username", username)
                 .append("courses", courses);
         collection.insertOne(doc);
-        System.out.println(firstname + " a bien été inscrit !");
     }
 
     public Document getUser(String userID) {

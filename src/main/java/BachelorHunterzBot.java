@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import javax.print.Doc;
 import java.util.*;
 
 import static java.lang.Math.toIntExact;
@@ -119,6 +120,7 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                             break;
                         case "/help":
                             messageToUser.setText(
+                                            "/start - commence le bot\n" +
                                             "/help - affiche la liste de commande disponibles par ordre alphabétique.\n" +
                                             "/saymyname - affiche le nom complet de l'utilisateur.\n" +
                                             "/newexercise <sigleBranche> - initialise une création d'exercice.\n" +
@@ -128,8 +130,8 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                                             "/exercisesbycourse <SIGLE_COURSE> - affiche les exercices créés pour le cours spécifié.\n" +
                                             "/exercisesbyteacherandcourse <SIGLE_PROFESSEUR> <SIGLE_COURS> - affiche les exercices créés par un professeur pour un cours spécifié.\n" +
                                             "/exercisesliked - affiche les exercices likés\n" +
-                                            "/getUserByUsername <username> - afficher un utilisateur selon son username\n" +
-                                            "/informCourses <COURSES_LIST> - permet de renseigner les cours suivis par l'utilisateur dans la BDD lors de l'inscription\n" +
+                                            "/getuserbyusername <username> - afficher un utilisateur selon son username\n" +
+                                            "/informcourses <COURSES_LIST> - permet de renseigner les cours suivis par l'utilisateur dans la BDD lors de l'inscription\n" +
                                             "/randomexercise - affiche un exercice aléatoire\n" +
                                             "/recommandations - affiche un exercice recommandé selon les likes\n" +
                                             "/topUsers - affiche les utilisateurs ayant insérés le plus d'exercices\n" +
@@ -220,7 +222,7 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                     }
                 }
             } else {
-                if (userCommand.startsWith("/informCourses ")) {
+                if (userCommand.startsWith("/informcourses ")) {
                     String cours = userCommand.substring(15);
                     if (checkIfCourseNameCorrect(cours)) {
                         coursesFollowed.add(cours);
@@ -235,7 +237,7 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
 
                 } else {
                     messageToUser.setText("Veuillez renseigner les sigles des cours que vous suivez, un à un, avec la commande : \n" +
-                            "/informCourses <SIGLE_COURS>.\n" +
+                            "/informcourses <SIGLE_COURS>.\n" +
                             "Exemple : /informCourses POO1");
                 }
             }
