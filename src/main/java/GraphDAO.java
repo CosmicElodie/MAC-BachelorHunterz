@@ -55,9 +55,9 @@ public class GraphDAO implements AutoCloseable {
         performRequest("MERGE (" + args + "{userID:'" + id + "'})");
 
         //ajoute le lien entre les deux
-        performRequest("MATCH (usr: User{userID:'" + "_" + userID + "' })\n" +
-                "MATCH (xrc:Exercise{ exerciseID: '" + "_" + exerciseID + "'})\n" +
-                "CREATE (usr)-[:PROPOSED{date:datetime()}]->(xrc)");
+        performRequest("MATCH (usr: User{userID:'_" + userID + "' })\n" +
+                "MATCH (xrc:Exercise{ exerciseID: '_" + exerciseID + "'})\n" +
+                "CREATE (usr)-[:INSERE]->(xrc)");
     }
 
     private Result performRequest(String request) {
@@ -70,7 +70,7 @@ public class GraphDAO implements AutoCloseable {
         try (Session session = driver.session()) {
             return session.readTransaction(tx -> {
                 List<String> exercises = new ArrayList<>();
-                Result result = tx.run("MATCH (u:User)-[:PROPOSED]->(e:Exercise) WHERE u.userID = '" + "_" + userID + "' RETURN e.exerciseID;");
+                Result result = tx.run("MATCH (u:User)-[:INSERE]->(e:Exercise) WHERE u.userID = '" + "_" + userID + "' RETURN e.exerciseID;");
                 while (result.hasNext()) {
                     exercises.add(result.next().get(0).asString());
                 }
@@ -83,7 +83,7 @@ public class GraphDAO implements AutoCloseable {
         try (Session session = driver.session()) {
             return session.readTransaction(tx -> {
                 List<String> users = new ArrayList<>();
-                Result result = tx.run("MATCH (e:Exercise)<-[:PROPOSED]-(u:User)\n"
+                Result result = tx.run("MATCH (e:Exercise)<-[:INSERE]-(u:User)\n"
                         + "RETURN u.userID, count(*) AS cnt\n"
                         + "ORDER BY cnt DESC LIMIT 10");
                 while (result.hasNext()) {
@@ -135,7 +135,7 @@ public class GraphDAO implements AutoCloseable {
             return session.readTransaction(tx -> {
                 List<String> exercises = new ArrayList<>();
                 Result result = tx.run(
-                        "MATCH (u1:User{userID: '_" + userID + "'})-[l1:LIKE]->(e:Exercice)<-[:PROPOSED]-(u2:User)-[:PROPOSED]->(e2:Exercice)<-[l3:LIKE]-(u3:User)\n" +
+                        "MATCH (u1:User{userID: '_" + userID + "'})-[l1:LIKE]->(e:Exercice)<-[:INSERE]-(u2:User)-[:INSERE]->(e2:Exercice)<-[l3:LIKE]-(u3:User)\n" +
                                 "RETURN e2, COUNT(*)\n" +
                                 "ORDER BY COUNT(*) DESC\n" +
                                 "LIMIT 5");
@@ -151,7 +151,7 @@ public class GraphDAO implements AutoCloseable {
         try (Session session = driver.session()) {
             return session.readTransaction(tx -> {
                 List<String> users = new ArrayList<>();
-                Result result = tx.run("MATCH (u1:User{userID: '_" + userID + "'})-[l:LIKE]->(e:Exercise)<-[p:PROPOSED]-(u2:User)\n"
+                Result result = tx.run("MATCH (u1:User{userID: '_" + userID + "'})-[l:LIKE]->(e:Exercise)<-[:INSERE]-(u2:User)\n"
                         + "RETURN u2.userID, count(*) AS cnt\n"
                         + "ORDER BY cnt DESC LIMIT 10");
                 while (result.hasNext()) {

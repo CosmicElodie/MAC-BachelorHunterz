@@ -64,7 +64,7 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
             SendMessage messageToUser = new SendMessage();
             messageToUser.setChatId(update.getMessage().getChatId());
 
-            if (DocumentDAO.getInstance().checkIfUserExists(firstname, lastname, userID, username, coursesFollowed)) {
+            if (DocumentDAO.getInstance().checkIfUserExists(userID)) {
                 //On check si l'utilisateur veut stopper une création d'exo qu'il a initiée.
                 if (userCommand.startsWith("/abort")) {
                     if (isCreatingExercise) {
@@ -133,7 +133,7 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                                             "/randomexercise - affiche un exercice aléatoire\n" +
                                             "/recommandations - affiche un exercice recommandé selon les likes\n" +
                                             "/topUsers - affiche les utilisateurs ayant insérés le plus d'exercices\n" +
-                                            "/topusersexerciseliked - afficher le top des utilisateurs ayant insérés le plus d'exercices et dont on a aimé un exercice\n"
+                                            "/topusersexerciseliked - afficher le top des utilisateurs ayant inséré le plus d'exercices et dont on a aimé un exercice\n"
                             );
                             break;
                         case "/topusers":
@@ -177,7 +177,7 @@ public class BachelorHunterzBot extends TelegramLongPollingBot {
                                     messageToUser.setText("Le cours spécifié n'existe pas ou est mal orthographié.\n" +
                                             "Exemple : Sigle du cours d'Informatique 1 -> INF1");
                                 }
-                            } else if (userCommand.startsWith("/getUserByUsername ")) {
+                            } else if (userCommand.startsWith("/getuserbyusername ")) {
                                 messageToUser.setText(getUserByUsername(userCommand.substring(19)));
                             } else if (userCommand.startsWith("/exercisesbyuser ")) {
                                 String specifiedUser = userCommand.substring(17);

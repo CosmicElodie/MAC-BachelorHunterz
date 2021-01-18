@@ -45,7 +45,7 @@ public class DocumentDAO {
         return mongoClient.getDatabase("bachelorhunterz");
     }
 
-    public boolean checkIfUserExists(String firstname, String lastname, Integer userID, String username, LinkedList<String> courses) {
+    public boolean checkIfUserExists(Integer userID) {
         java.util.logging.Logger.getLogger("org.mongodb.driver").setLevel(Level.OFF);
         database = getDatabase();
         collection = database.getCollection("user");
@@ -54,7 +54,6 @@ public class DocumentDAO {
         long subscribed = collection.count(Document.parse("{id : " + Integer.toString(userID) + "}"));
         if (subscribed == 0) {
             return false;
-            //inscriptionUserDatabase(firstname, lastname, userID, username, courses);
         }
         else {
             return true;
